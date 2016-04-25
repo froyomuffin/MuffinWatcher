@@ -10,6 +10,6 @@ LATESTURL='https://github.com/KSP-CKAN/CKAN/releases/latest'
 VERSION=$(curl -s $LATESTURL | perl -pe 's/^.*".*\/(.*?)".*$/$1/g')
 
 DLURL="https://github.com/KSP-CKAN/CKAN/releases/download/$VERSION/ckan.exe"
-echo $DLURL
+echo "$DLURL to $TARGETFILE"
 
 wget $DLURL -O $TARGETFILE

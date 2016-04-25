@@ -15,6 +15,7 @@ function reset-workspace() {
     mono $CKAN ksp forget $LATESTVERSION
     mono $CKAN ksp forget $REFERENCEVERSION
     rm -rf $WORKSPACE
+    mkdir -p $WORKSPACE
 }
 
 # Update CKAN
@@ -34,7 +35,9 @@ function create-stubs() {
 # Get modlist of a version
 function _build-modlist() {
     VERSION=$1
-    mono $CKAN ksp default $VERSION
+    mono $CKAN ksp default $VERSION &>/dev/null
+    mono $CKAN update &>/dev/null
+    mono $CKAN available | grep '\*' | perl -pe 's/^.*? (.*?) \(.*$/$1/g'
 }
 
 # Get the modlist for latest and reference versions
