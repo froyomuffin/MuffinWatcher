@@ -1,0 +1,4 @@
+#!/bin/bash
+
+WORKSPACE="/tmp/ksp-watcher"
+CKANFILE="$WORKSPACE/ckan"

@@ -1,0 +1,21 @@
+#!/bin/bash
+
+DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
+source $DIR/CONFIG
+
+VERSION=$1
+TARGET=$2
+
+#TODO Validator
+
+[[ -z "$VERSION" ]] || [[ -z "$TARGET" ]] && echo "Missing argument" && exit 1
+
+NAME="stub-$VERSION"
+STUBDIR="$TARGET/$NAME"
+
+[[ -e "$STUBDIR" ]] && echo "Stub already exists!" && exit 1
+
+mkdir -p $STUBDIR
+mkdir -p $STUBDIR/GameData
+
+echo "Version $VERSION" >> $STUBDIR/readme.txt
