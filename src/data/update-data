@@ -1,4 +1,53 @@
 #!/bin/bash
 
 WORKSPACE="/tmp/ksp-watcher"
-CKANFILE="$WORKSPACE/ckan"
+CKAN="$WORKSPACE/ckan"
+
+LATESTVERSION="1.1.0"
+REFERENCEVERSION="1.0.5"
+
+THISDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
+
+# TODO: Locking
+
+# Cleanup
+function reset-workspace() {
+    mono $CKAN ksp forget $LATESTVERSION
+    mono $CKAN ksp forget $REFERENCEVERSION
+    rm -rf $WORKSPACE
+}
+
+# Update CKAN
+function download-ckan() {
+    $THISDIR/get-ckan $CKAN
+}
+
+# Create stubs for latest and reference version installations and link them into CKAN
+function create-stubs() {
+    $THISDIR/create-stub $REFERENCEVERSION $WORKSPACE
+    $THISDIR/create-stub $LATESTVERSION $WORKSPACE
+
+    mono $CKAN ksp add $REFERENCEVERSION $WORKSPACE/$REFERENCEVERSION
+    mono $CKAN ksp add $LATESTVERSION $WORKSPACE/$LATESTVERSION
+}
+
+# Get modlist of a version
+function _build-modlist() {
+    VERSION=$1
+    mono $CKAN ksp default $VERSION
+}
+
+# Get the modlist for latest and reference versions
+function build-modlists() {
+    REFERENCELIST="$WORKSPACE/list-$REFERENCEVERSION"
+    LATESTLIST="$WORKSPACE/list-$LATESTVERSION"
+
+    _build-modlist $REFERENCEVERSION > $REFERENCELIST
+    _build-modlist $LATESTVERSION > $LATESTLIST
+}
+
+# Main
+reset-workspace
+download-ckan
+create-stubs
+build-modlists

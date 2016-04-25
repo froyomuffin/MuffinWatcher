@@ -10,7 +10,7 @@ TARGET=$2
 
 [[ -z "$VERSION" ]] || [[ -z "$TARGET" ]] && echo "Missing argument" && exit 1
 
-NAME="stub-$VERSION"
+NAME="$VERSION"
 STUBDIR="$TARGET/$NAME"
 
 [[ -e "$STUBDIR" ]] && echo "Stub already exists!" && exit 1
