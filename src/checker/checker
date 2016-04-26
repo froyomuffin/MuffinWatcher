@@ -1,0 +1,74 @@
+#!/bin/bash
+
+SCRIPTDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
+
+source $SCRIPTDIR/../CONFIG
+
+# Takes LIST and EXCLUSIONLIST. Masks away all EXCLUSIONLIST from LIST.
+function filter-list() {
+    LIST=$(echo "$1" | sort)
+    EXCLUSIONLIST=$(echo "$2" | sort)
+
+    diff <("$LIST") <("$EXCLUSIONLIST") | grep "<" | sed 's/^> //g'
+}
+
+# Takes LIST and OTHERLIST. Finds the elements they have in common.
+function get-common() {
+    LIST=$(echo "$1" | sort)
+    OTHERLISTLIST=$(echo "$2" | sort)
+
+    comm -12 <(echo "$LIST") <(echo "$OTHERLIST")
+}
+
+# Takes a MODLIST and composes a brief message
+function compose-message() {
+    MODLIST="$1"
+
+    echo "Hello,"
+    echo ""
+    echo "The following mods have been updated:"
+    echo "$MODLIST"
+    echo
+    echo "Bye!"
+}
+
+# Takes an EMAIL and a MESSAGE then sends it out
+function send-message() {
+    EMAIL=$1
+    shift
+    MESSAGE="$*"
+
+    echo "$MESSAGE" | mail -s "You have mods!" $EMAIL
+}
+
+# Main
+[[ ! -e "$USERSTORE" ]] && mkdir -p $USERSTORE
+
+while true
+do
+    AVAILABLEMODS=$(cat $REFERENCELIST)
+    cd $USERSTORE
+    USERLIST=$(ls)
+    
+    for USER in $USERLIST
+    do
+        USERBAK=$USER.bak
+        cp $USER $USER.bak
+
+        USERDATA=$(cat $USER | grep -v ' ')
+
+        EMAIL=$(echo "$1" | grep '@')
+        SUBSCRIPTION=$(echo "$1" | grep -v '@' | sort)
+
+        UPDATEDMODS=$(get-common "$SUBSCRIPTION" "$AVAILABLEMODS")
+
+        send-message $EMAIL "$(compose-message "$UPDATEDMODS")"
+
+        UPDATEDSUB=$(filter-list "$SUBSCRIPTION" "$AVAILABLEMODS")
+
+        echo "$EMAIL" > $USER
+        echo "UPDATEDSUB >> $USER
+
+        rm $USER.bak
+    done
+done

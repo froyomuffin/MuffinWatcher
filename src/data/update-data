@@ -1,12 +1,8 @@
 #!/bin/bash
 
-WORKSPACE="/tmp/ksp-mod-watcher"
-CKAN="$WORKSPACE/ckan"
+SCRIPTDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
 
-LATESTVERSION="1.1.0"
-REFERENCEVERSION="1.0.5"
-
-THISDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
+source $SCRIPTDIR/../CONFIG
 
 # TODO: Locking
 
@@ -24,13 +20,13 @@ function reset-workspace() {
 
 # Update CKAN
 function download-ckan() {
-    $THISDIR/get-ckan $CKAN
+    $SCRIPTDIR/get-ckan $CKAN
 }
 
 # Create stubs for latest and reference version installations and link them into CKAN
 function create-stubs() {
-    $THISDIR/create-stub $REFERENCEVERSION $WORKSPACE
-    $THISDIR/create-stub $LATESTVERSION $WORKSPACE
+    $SCRIPTDIR/create-stub $REFERENCEVERSION $WORKSPACE
+    $SCRIPTDIR/create-stub $LATESTVERSION $WORKSPACE
 
     mono $CKAN ksp add $REFERENCEVERSION $WORKSPACE/$REFERENCEVERSION
     mono $CKAN ksp add $LATESTVERSION $WORKSPACE/$LATESTVERSION
@@ -46,9 +42,6 @@ function _build-modlist() {
 
 # Get the modlist for latest and reference versions
 function build-modlists() {
-    REFERENCELIST="$WORKSPACE/list-$REFERENCEVERSION"
-    LATESTLIST="$WORKSPACE/list-$LATESTVERSION"
-
     _build-modlist $REFERENCEVERSION > $REFERENCELIST
     _build-modlist $LATESTVERSION > $LATESTLIST
 }

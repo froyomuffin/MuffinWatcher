@@ -1,0 +1,12 @@
+#!/bin/bash
+
+export WORKSPACE="/tmp/ksp-mod-watcher"
+export USERSTORE="~/ksp-mod-watcher/users"
+
+export CKAN="$WORKSPACE/ckan"
+
+export REFERENCEVERSION="1.0.5"
+export LATESTVERSION="1.1.0"
+
+export REFERENCELIST="$WORKSPACE/list-$REFERENCEVERSION"
+export LATESTLIST="$WORKSPACE/list-$LATESTVERSION"
