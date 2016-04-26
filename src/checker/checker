@@ -52,10 +52,10 @@ do
 
     cd $USERSTORE
     USERLIST=$(ls -l | awk '{ print $NF }' | grep '@' | grep -v 'bak$')
-    
+
     for USER in $USERLIST
     do
-	echo "Processing $USER"
+        echo "Processing $USER"
 
         USERBAK=$USER.bak
         cp $USER $USER.bak
@@ -66,12 +66,12 @@ do
 
         UPDATEDMODS=$(get-common "$SUBSCRIPTION" "$AVAILABLEMODS")
 
-	if [[ ! -z "$UPDATEDMODS" ]] 
-	then
-		send-message $USER "$(compose-message "$UPDATEDMODS")"
-		UPDATEDSUB=$(filter-list "$SUBSCRIPTION" "$AVAILABLEMODS")
-		echo "$UPDATEDSUB" > $USER
-	fi
+        if [[ ! -z "$UPDATEDMODS" ]] 
+        then
+            send-message $USER "$(compose-message "$UPDATEDMODS")"
+            UPDATEDSUB=$(filter-list "$SUBSCRIPTION" "$AVAILABLEMODS")
+            echo "$UPDATEDSUB" > $USER
+        fi
 
         rm $USER.bak
     done
