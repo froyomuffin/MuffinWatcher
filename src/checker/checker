@@ -9,15 +9,15 @@ function filter-list() {
     LIST=$(echo "$1" | sort)
     EXCLUSIONLIST=$(echo "$2" | sort)
 
-    diff <("$LIST") <("$EXCLUSIONLIST") | grep "<" | sed 's/^> //g'
+    diff <(echo "$LIST") <(echo "$EXCLUSIONLIST") | grep "<" | sed 's/^< //g' | sort | uniq
 }
 
 # Takes LIST and OTHERLIST. Finds the elements they have in common.
 function get-common() {
     LIST=$(echo "$1" | sort)
-    OTHERLISTLIST=$(echo "$2" | sort)
+    OTHERLIST=$(echo "$2" | sort)
 
-    comm -12 <(echo "$LIST") <(echo "$OTHERLIST")
+    comm -12 <(echo "$LIST") <(echo "$OTHERLIST") | sort | uniq
 }
 
 # Takes a MODLIST and composes a brief message
@@ -42,33 +42,39 @@ function send-message() {
 }
 
 # Main
-[[ ! -e "$USERSTORE" ]] && mkdir -p $USERSTORE
+[[ ! -e $USERSTORE ]] && mkdir -p $USERSTORE
 
 while true
 do
+    date
+
     AVAILABLEMODS=$(cat $REFERENCELIST)
+
     cd $USERSTORE
-    USERLIST=$(ls)
+    USERLIST=$(ls -l | awk '{ print $NF }' | grep '@' | grep -v 'bak$')
     
     for USER in $USERLIST
     do
+	echo "Processing $USER"
+
         USERBAK=$USER.bak
         cp $USER $USER.bak
 
         USERDATA=$(cat $USER | grep -v ' ')
 
-        EMAIL=$(echo "$1" | grep '@')
-        SUBSCRIPTION=$(echo "$1" | grep -v '@' | sort)
+        SUBSCRIPTION=$(cat $USER | sort | uniq)
 
         UPDATEDMODS=$(get-common "$SUBSCRIPTION" "$AVAILABLEMODS")
 
-        send-message $EMAIL "$(compose-message "$UPDATEDMODS")"
-
-        UPDATEDSUB=$(filter-list "$SUBSCRIPTION" "$AVAILABLEMODS")
-
-        echo "$EMAIL" > $USER
-        echo "UPDATEDSUB >> $USER
+	if [[ ! -z "$UPDATEDMODS" ]] 
+	then
+		send-message $USER "$(compose-message "$UPDATEDMODS")"
+		UPDATEDSUB=$(filter-list "$SUBSCRIPTION" "$AVAILABLEMODS")
+		echo "$UPDATEDSUB" > $USER
+	fi
 
         rm $USER.bak
     done
+
+    sleep 1
 done
