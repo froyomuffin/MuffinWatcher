@@ -1,6 +1,6 @@
 #!/bin/bash
 
-WORKSPACE="/tmp/ksp-watcher"
+WORKSPACE="/tmp/ksp-mod-watcher"
 CKAN="$WORKSPACE/ckan"
 
 LATESTVERSION="1.1.0"
@@ -12,8 +12,12 @@ THISDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" # http://stackoverflow.c
 
 # Cleanup
 function reset-workspace() {
-    mono $CKAN ksp forget $LATESTVERSION
-    mono $CKAN ksp forget $REFERENCEVERSION
+    if [[ -e $CKAN ]]
+    then
+        mono $CKAN ksp forget $LATESTVERSION
+        mono $CKAN ksp forget $REFERENCEVERSION
+    fi
+
     rm -rf $WORKSPACE
     mkdir -p $WORKSPACE
 }
@@ -49,6 +53,7 @@ function build-modlists() {
     _build-modlist $LATESTVERSION > $LATESTLIST
 }
 
+# TODO: Data should be stored in a database
 # Main
 reset-workspace
 download-ckan
