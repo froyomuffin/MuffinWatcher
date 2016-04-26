@@ -34,7 +34,7 @@ function compose-message() {
 
     echo "Hello,"
     echo
-    echo "The following mods from your watchlist are available for your chosen KSP release:"
+    echo "The following mods from your watchlist are available for the current KSP release:"
     echo "$(tab-list "$MODLIST")"
     echo
 
@@ -88,7 +88,8 @@ do
 
         if [[ ! -z "$UPDATEDMODS" ]] 
         then
-            echo "Update found"
+            echo "Updated mod(s) found!"
+            echo "$(tab-list "$UPDATEDMODS")"
 
             UPDATEDSUB=$(filter-list "$SUBSCRIPTION" "$AVAILABLEMODS")
             send-message $USER "$(compose-message "$UPDATEDMODS" "$UPDATEDSUB")"
@@ -105,5 +106,5 @@ do
         rm $USER.bak
     done
 
-    sleep 5
+    sleep 900
 done
