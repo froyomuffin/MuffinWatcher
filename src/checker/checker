@@ -20,14 +20,27 @@ function get-common() {
     comm -12 <(echo "$LIST") <(echo "$OTHERLIST") | sort | uniq
 }
 
-# Takes a MODLIST and composes a brief message
+# Takes a MODLIST and a REMAININGMODS and composes a brief message
 function compose-message() {
     MODLIST="$1"
+    shift
+    REMAININGMODS="$*"
 
     echo "Hello,"
-    echo ""
-    echo "The following mods have been updated:"
+    echo
+    echo "The following mods from your watchlist are available for your chosen KSP release:"
     echo "$MODLIST"
+    echo
+
+    if [[ -z "$REMAININGMODS" ]]
+    then
+        echo "There are no more mods left in your watchlist!"
+        echo "You have been unsubscribed. For more updates, create a new watchlist."
+    else
+        echo "The following mods remain on your watchlist:"
+        echo "$REMAININGMODS"
+    fi
+
     echo
     echo "Bye!"
 }
@@ -68,9 +81,15 @@ do
 
         if [[ ! -z "$UPDATEDMODS" ]] 
         then
-            send-message $USER "$(compose-message "$UPDATEDMODS")"
             UPDATEDSUB=$(filter-list "$SUBSCRIPTION" "$AVAILABLEMODS")
-            echo "$UPDATEDSUB" > $USER
+            send-message $USER "$(compose-message "$UPDATEDMODS" "$UPDATEDSUB")"
+
+            if [[ ! -z "$UPDATEDSUB" ]]
+            then
+                echo "$UPDATEDSUB" > $USER
+            else
+                rm -f $USER
+            fi
         fi
 
         rm $USER.bak
