@@ -6,18 +6,24 @@ source $SCRIPTDIR/../CONFIG
 
 # Takes LIST and EXCLUSIONLIST. Masks away all EXCLUSIONLIST from LIST.
 function filter-list() {
-    LIST=$(echo "$1" | sort)
-    EXCLUSIONLIST=$(echo "$2" | sort)
+    LIST=$(echo "$1")
+    EXCLUSIONLIST=$(echo "$2")
 
     diff <(echo "$LIST") <(echo "$EXCLUSIONLIST") | grep "<" | sed 's/^< //g' | sort | uniq
 }
 
 # Takes LIST and OTHERLIST. Finds the elements they have in common.
 function get-common() {
-    LIST=$(echo "$1" | sort)
-    OTHERLIST=$(echo "$2" | sort)
+    LIST=$(echo "$1")
+    OTHERLIST=$(echo "$2")
 
     comm -12 <(echo "$LIST") <(echo "$OTHERLIST") | sort | uniq
+}
+
+# Tabs a list
+function tab-list() {
+    INPUT="$*"
+    echo "$INPUT" | sed 's/^/  /g'
 }
 
 # Takes a MODLIST and a REMAININGMODS and composes a brief message
@@ -29,16 +35,16 @@ function compose-message() {
     echo "Hello,"
     echo
     echo "The following mods from your watchlist are available for your chosen KSP release:"
-    echo "$MODLIST"
+    echo "$(tab-list "$MODLIST")"
     echo
 
     if [[ -z "$REMAININGMODS" ]]
     then
-        echo "There are no more mods left in your watchlist!"
+        echo "There are no mods left in your watchlist!"
         echo "You have been unsubscribed. For more updates, create a new watchlist."
     else
         echo "The following mods remain on your watchlist:"
-        echo "$REMAININGMODS"
+        echo "$(tab-list "$REMAININGMODS")"
     fi
 
     echo
@@ -61,7 +67,7 @@ while true
 do
     date
 
-    AVAILABLEMODS=$(cat $REFERENCELIST)
+    AVAILABLEMODS=$(cat $LATESTLIST | sed 's/ //g' | sed '/^\s*$/d' | sort | uniq)
 
     cd $USERSTORE
     USERLIST=$(ls -l | awk '{ print $NF }' | grep '@' | grep -v 'bak$')
@@ -75,12 +81,15 @@ do
 
         USERDATA=$(cat $USER | grep -v ' ')
 
-        SUBSCRIPTION=$(cat $USER | sort | uniq)
+        SUBSCRIPTION=$(cat $USER | sed 's/ //g' | sed '/^\s*$/d' | sort | uniq)
+        # TODO Handle removal better
 
         UPDATEDMODS=$(get-common "$SUBSCRIPTION" "$AVAILABLEMODS")
 
         if [[ ! -z "$UPDATEDMODS" ]] 
         then
+            echo "Update found"
+
             UPDATEDSUB=$(filter-list "$SUBSCRIPTION" "$AVAILABLEMODS")
             send-message $USER "$(compose-message "$UPDATEDMODS" "$UPDATEDSUB")"
 
@@ -88,6 +97,7 @@ do
             then
                 echo "$UPDATEDSUB" > $USER
             else
+                echo "Watchlist complete. Deleting user"
                 rm -f $USER
             fi
         fi
@@ -95,5 +105,5 @@ do
         rm $USER.bak
     done
 
-    sleep 1
+    sleep 5
 done
