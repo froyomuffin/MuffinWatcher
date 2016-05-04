@@ -106,5 +106,6 @@ do
         rm $USER.bak
     done
 
+    echo "Sleeping for a bit"
     sleep 900
 done

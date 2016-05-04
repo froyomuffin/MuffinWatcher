@@ -1,12 +1,14 @@
 #!/bin/bash
 
 export WORKSPACE="/tmp/ksp-mod-watcher"
-export USERSTORE="/tmp/ksp-mod-watcher-persistent/users"
+export WORKSPACEPER="/tmp/ksp-mod-watcher-persistent"
+export USERSTORE="$WORKSPACEPER/users"
+export TWITTER="$WORKSPACEPER/twitter"
 
 export CKAN="$WORKSPACE/ckan"
 
 export REFERENCEVERSION="1.0.5"
-export LATESTVERSION="1.1.0"
+export LATESTVERSION="1.1.2"
 
 export REFERENCELIST="$WORKSPACE/list-$REFERENCEVERSION"
 export LATESTLIST="$WORKSPACE/list-$LATESTVERSION"

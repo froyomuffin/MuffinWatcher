@@ -1,0 +1,79 @@
+#!/bin/bash
+
+# TODO: HANDLE DUPLICATIONS
+
+SCRIPTDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
+
+source $SCRIPTDIR/../CONFIG
+
+# Takes LIST and EXCLUSIONLIST. Masks away all EXCLUSIONLIST from LIST.
+function filter-list() {
+    LIST=$(echo "$1")
+    EXCLUSIONLIST=$(echo "$2")
+
+    diff <(echo "$LIST") <(echo "$EXCLUSIONLIST") | grep "<" | sed 's/^< //g' | sort | uniq
+}
+
+# Takes LIST and OTHERLIST. Finds the elements they have in common.
+function get-common() {
+    LIST=$(echo "$1")
+    OTHERLIST=$(echo "$2")
+
+    comm -12 <(echo "$LIST") <(echo "$OTHERLIST") | sort | uniq
+}
+
+# Tabs a list
+function tab-list() {
+    INPUT="$*"
+    echo "$INPUT" | sed 's/^/  /g'
+}
+
+# Takes UPDATEDMOD and tweet that it is available!
+function tweet-update() {
+    UPDATEDMOD=$1
+    MESSAGE="\"$UPDATEDMOD\" available for KSP $LATESTVERSION! #KSPModUpdated"
+    echo "Sending '$MESSAGE'"
+
+    t update "$MESSAGE"
+}
+
+# Takes UPDATEDLIST and dispatches them for a tweet each
+function tweet-updates() {
+    UPDATEDLIST=$*
+
+    for UPDATEDMOD in $UPDATEDLIST
+    do
+        tweet-update $UPDATEDMOD
+    done
+}
+
+# Main
+[[ ! -e $TWITTER ]] && mkdir -p $WORKSPACEPER && touch $TWITTER
+
+while true
+do
+    date
+
+    echo "Processing Twitter list"
+
+    SUBSCRIPTION=$(cat $TWITTER | sed 's/ //g' | sed '/^\s*$/d' | sort | uniq)
+    AVAILABLEMODS=$(cat $LATESTLIST | sed 's/ //g' | sed '/^\s*$/d' | sort | uniq)
+    UPDATEDMODS=$(get-common "$SUBSCRIPTION" "$AVAILABLEMODS")
+
+    if [[ ! -z "$UPDATEDMODS" ]] 
+    then
+        echo "Updated mod(s) found!"
+        echo "$(tab-list "$UPDATEDMODS")"
+
+        tweet-updates "$UPDATEDMODS"
+
+        UPDATEDSUB=$(filter-list "$SUBSCRIPTION" "$AVAILABLEMODS")
+        if [[ ! -z "$UPDATEDSUB" ]]
+        then
+            echo "$UPDATEDSUB" > $TWITTER
+        fi
+    fi
+
+    echo "Sleeping for a bit"
+    sleep 900
+done

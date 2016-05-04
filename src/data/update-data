@@ -42,13 +42,37 @@ function _build-modlist() {
 
 # Get the modlist for latest and reference versions
 function build-modlists() {
+    REFERENCELIST="$WORKSPACE/list-$REFERENCEVERSION"
+    LATESTLIST="$WORKSPACE/list-$LATESTVERSION"
+
     _build-modlist $REFERENCEVERSION > $REFERENCELIST
     _build-modlist $LATESTVERSION > $LATESTLIST
+
+    comm -12 $REFERENCELIST $LATESTLIST
 }
 
-# TODO: Data should be stored in a database
 # Main
-reset-workspace
-download-ckan
-create-stubs
-build-modlists
+TARGETFILE="/tmp/test"
+
+while true
+do
+    reset-workspace
+    download-ckan
+    create-stubs
+
+    DATA="$(build-modlists)"
+
+    echo "Got"
+    echo "$DATA"
+
+    date > $TARGETFILE
+    echo "<br><br>" >> $TARGETFILE
+
+    for LINE in $DATA
+    do
+        echo "$LINE <br>" >> $TARGETFILE
+    done
+
+    sleep 900 # 15 Minutes
+done
+\
