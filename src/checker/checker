@@ -2,29 +2,8 @@
 
 SCRIPTDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
 
+source $SCRIPTDIR/../util
 source $SCRIPTDIR/../CONFIG
-
-# Takes LIST and EXCLUSIONLIST. Masks away all EXCLUSIONLIST from LIST.
-function filter-list() {
-    LIST=$(echo "$1")
-    EXCLUSIONLIST=$(echo "$2")
-
-    diff <(echo "$LIST") <(echo "$EXCLUSIONLIST") | grep "<" | sed 's/^< //g' | sort | uniq
-}
-
-# Takes LIST and OTHERLIST. Finds the elements they have in common.
-function get-common() {
-    LIST=$(echo "$1")
-    OTHERLIST=$(echo "$2")
-
-    comm -12 <(echo "$LIST") <(echo "$OTHERLIST") | sort | uniq
-}
-
-# Tabs a list
-function tab-list() {
-    INPUT="$*"
-    echo "$INPUT" | sed 's/^/  /g'
-}
 
 # Takes a MODLIST and a REMAININGMODS and composes a brief message
 function compose-message() {

@@ -18,15 +18,46 @@ function reset-workspace() {
     mkdir -p $WORKSPACE
 }
 
+function get-ckan() {
+    local TARGETFILE=$1
+
+    [[ -z "$TARGETFILE" ]] && echo "Missing argument!" && exit 1
+
+    local LATESTURL='https://github.com/KSP-CKAN/CKAN/releases/latest'
+    local VERSION=$(curl -s $LATESTURL | perl -pe 's/^.*".*\/(.*?)".*$/$1/g')
+
+    local DLURL="https://github.com/KSP-CKAN/CKAN/releases/download/$VERSION/ckan.exe"
+    echo "$DLURL to $TARGETFILE"
+
+    wget $DLURL -O $TARGETFILE
+}
+
 # Update CKAN
 function download-ckan() {
-    $SCRIPTDIR/get-ckan $CKAN
+    get-ckan $CKAN
+}
+
+function create-stub() {
+    local VERSION=$1
+    local TARGET=$2
+
+    [[ -z "$VERSION" ]] || [[ -z "$TARGET" ]] && echo "Missing argument" && exit 1
+
+    local NAME="$VERSION"
+    local STUBDIR="$TARGET/$NAME"
+
+    [[ -e "$STUBDIR" ]] && echo "Stub already exists!" && exit 1
+
+    mkdir -p $STUBDIR
+    mkdir -p $STUBDIR/GameData
+
+    echo "Version $VERSION" >> $STUBDIR/readme.txt
 }
 
 # Create stubs for latest and reference version installations and link them into CKAN
 function create-stubs() {
-    $SCRIPTDIR/create-stub $REFERENCEVERSION $WORKSPACE
-    $SCRIPTDIR/create-stub $LATESTVERSION $WORKSPACE
+    create-stub $REFERENCEVERSION $WORKSPACE
+    create-stub $LATESTVERSION $WORKSPACE
 
     mono $CKAN ksp add $REFERENCEVERSION $WORKSPACE/$REFERENCEVERSION
     mono $CKAN ksp add $LATESTVERSION $WORKSPACE/$LATESTVERSION

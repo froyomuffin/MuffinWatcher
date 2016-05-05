@@ -1,0 +1,23 @@
+#!/bin/bash
+
+# Takes LIST and EXCLUSIONLIST. Masks away all elements in EXCLUSIONLIST from LIST.
+function filter-list() {
+    local LIST=$(echo "$1")
+    local EXCLUSIONLIST=$(echo "$2")
+
+    diff <(echo "$LIST") <(echo "$EXCLUSIONLIST") | grep "<" | sed 's/^< //g' | sort | uniq
+}
+
+# Takes LIST and OTHERLIST. Finds the elements they have in common.
+function get-common() {
+    local LIST=$(echo "$1")
+    local OTHERLIST=$(echo "$2")
+
+    comm -12 <(echo "$LIST") <(echo "$OTHERLIST") | sort | uniq
+}
+
+# Tabs a list
+function tab-list() {
+    local INPUT="$*"
+    echo "$INPUT" | sed 's/^/  /g'
+}
