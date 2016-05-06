@@ -1,10 +1,8 @@
 #!/bin/bash
 
-# TODO: HANDLE DUPLICATIONS
-
 SCRIPTDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
 
-source $SCRIPTDIR/../utils
+source $SCRIPTDIR/utils
 source $SCRIPTDIR/../CONFIG
 
 # Takes UPDATEDMOD and tweet that it is available!
@@ -29,30 +27,27 @@ function tweet-updates() {
 # Main
 [[ ! -e $TWITTER ]] && mkdir -p $WORKSPACEPER && touch $TWITTER
 
-while true
-do
-    date
+date
 
-    echo "Processing Twitter list"
+echo "Processing Twitter list"
 
-    SUBSCRIPTION=$(cat $TWITTER | sed 's/ //g' | sed '/^\s*$/d' | sort | uniq)
-    AVAILABLEMODS=$(cat $LATESTLIST | sed 's/ //g' | sed '/^\s*$/d' | sort | uniq)
-    UPDATEDMODS=$(get-common "$SUBSCRIPTION" "$AVAILABLEMODS")
+SUBSCRIPTION=$(cat $TWITTER | sed 's/ //g' | sed '/^\s*$/d' | sort | uniq)
+AVAILABLEMODS=$(cat $LATESTLIST | sed 's/ //g' | sed '/^\s*$/d' | sort | uniq)
+UPDATEDMODS=$(get-common "$SUBSCRIPTION" "$AVAILABLEMODS")
 
-    if [[ ! -z "$UPDATEDMODS" ]] 
+if [[ ! -z "$UPDATEDMODS" ]] 
+then
+    echo "Updated mod(s) found!"
+    echo "$(tab-list "$UPDATEDMODS")"
+
+    tweet-updates "$UPDATEDMODS"
+
+    UPDATEDSUB=$(filter-list "$SUBSCRIPTION" "$AVAILABLEMODS")
+    if [[ ! -z "$UPDATEDSUB" ]]
     then
-        echo "Updated mod(s) found!"
-        echo "$(tab-list "$UPDATEDMODS")"
-
-        tweet-updates "$UPDATEDMODS"
-
-        UPDATEDSUB=$(filter-list "$SUBSCRIPTION" "$AVAILABLEMODS")
-        if [[ ! -z "$UPDATEDSUB" ]]
-        then
-            echo "$UPDATEDSUB" > $TWITTER
-        fi
+        echo "$UPDATEDSUB" > $TWITTER
     fi
+fi
 
-    echo "Sleeping for a bit"
-    sleep 900
-done
+echo "Sleeping for a bit"
+sleep 900

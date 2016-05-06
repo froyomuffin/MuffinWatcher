@@ -1,14 +1,12 @@
 #!/bin/bash
 
+# Persistent data
+export DATASTORE="/home/muffinwatcher"
+export SUBSCRIBERSTORE="$DATASTORE/subscribers"
+export VERSIONFILE="$DATASTORE/version"
+
+# Transient data
 export WORKSPACE="/tmp/ksp-mod-watcher"
-export WORKSPACEPER="/tmp/ksp-mod-watcher-persistent"
-export USERSTORE="$WORKSPACEPER/users"
-export TWITTER="$WORKSPACEPER/twitter"
-
-export CKAN="$WORKSPACE/ckan"
-
-export REFERENCEVERSION="1.0.5"
-export LATESTVERSION="1.1.2"
-
-export REFERENCELIST="$WORKSPACE/list-$REFERENCEVERSION"
-export LATESTLIST="$WORKSPACE/list-$LATESTVERSION"
+export SUBSCRIBERWORKSPACE="$WORKSPACE/subscribers"
+export LATESTLIST="$WORKSPACE/list-latest"
+export CKANBIN="$WORKSPACE/ckan"

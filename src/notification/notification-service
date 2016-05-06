@@ -1,0 +1,67 @@
+#!/bin/bash
+
+SCRIPTDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
+
+source $SCRIPTDIR/../CONFIG
+
+# Load SUBSCRIBER to the workspace
+function load() {
+    local SUBSCRIBER=$1
+    cp -r $SUBSCRIBERSTORE/$SUBSCRIBER $SUBSCRIBERWORKSPACE/$SUBSCRIBER
+}
+
+# Persist SUBSCRIBER to store
+function persist() {
+    local SUBSCRIBER=$1
+    cp -r $SUBSCRIBERWORKSPACE/$SUBSCRIBER $SUBSCRIBERSTORE/$SUBSCRIBER 
+}
+
+# Configurations
+NOTIFICATIONPERIOD="900"
+
+while true
+do
+    SUBSCRIBERS=$(ls $SUBSCRIBERSTORE | awk -F'/' '{ print $NF }')
+    AVAILABLEMODS=$(cat $LATESTLIST | sed 's/ //g' | sed '/^\s*$/d' | sort | uniq)
+
+    if [[ ! -z "$ACTIVEVERSION" ]]
+    then
+        LOADEDVERSION=$(cat $VERSIONFILE | head)
+        if [[ "$LOADEDVERSION" == "$LOADEDVERSION" ]]
+        then
+            echo "Detected new version $LOADEDVERSION"
+
+            ACTIVEVERSION=$LOADEDVERSION
+
+            # Reset
+            for SUBSCRIBER in $SUBSCRIBERS
+            do
+                cp $SUBSCRIBERSTORE/$SUBSCRIBER/watchlist $SUBSCRIBERSTORE/$SUBSCRIBER/remaininglist
+                cp $SUBSCRIBERWORKSPACE/$SUBSCRIBER/watchlist $SUBSCRIBERSTORE/$SUBSCRIBER/remaininglist
+            done
+        fi
+    fi
+
+    for SUBSCRIBER in $SUBSCRIBERS
+    do
+        # TODO: Checks
+
+        load $SUBSCRIBER
+
+        NOTIFIERS=$(cat $SUBSCRIBERWORKSPACE/$SUBSCRIBER/notifiers)
+
+        for NOTIFIERDATA in $NOTIFIERS
+        do
+            TYPE=$(echo $NOTIFIERDATA | awk -F':' '{ print $1 }')
+            SUBSCRIBERDIR=$SUBSCRIBERWORKSPACE/$SUBSCRIBER
+
+            CMD="$SCRIPTDIR/$TYPE $SUBSCRIBERDIR"
+
+            eval $CMD
+        done
+
+        persist $SUBSCRIBER
+    done
+
+    sleep $NOTIFICATIONPERIOD
+done

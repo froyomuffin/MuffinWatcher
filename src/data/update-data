@@ -4,14 +4,13 @@ SCRIPTDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" # http://stackoverflow
 
 source $SCRIPTDIR/../CONFIG
 
-# TODO: Locking
+# Configuration
 
 # Cleanup
 function reset-workspace() {
-    if [[ -e $CKAN ]]
+    if [[ -e $CKANBIN ]]
     then
-        mono $CKAN ksp forget $LATESTVERSION
-        mono $CKAN ksp forget $REFERENCEVERSION
+        mono $CKANBIN ksp forget $LATESTVERSION
     fi
 
     rm -rf $WORKSPACE
@@ -34,7 +33,7 @@ function get-ckan() {
 
 # Update CKAN
 function download-ckan() {
-    get-ckan $CKAN
+    get-ckan $CKANBIN
 }
 
 function create-stub() {
@@ -59,22 +58,22 @@ function create-stubs() {
     create-stub $REFERENCEVERSION $WORKSPACE
     create-stub $LATESTVERSION $WORKSPACE
 
-    mono $CKAN ksp add $REFERENCEVERSION $WORKSPACE/$REFERENCEVERSION
-    mono $CKAN ksp add $LATESTVERSION $WORKSPACE/$LATESTVERSION
+    mono $CKANBIN ksp add $REFERENCEVERSION $WORKSPACE/$REFERENCEVERSION
+    mono $CKANBIN ksp add $LATESTVERSION $WORKSPACE/$LATESTVERSION
 }
 
 # Get modlist of a version
 function _build-modlist() {
-    VERSION=$1
-    mono $CKAN ksp default $VERSION &>/dev/null
-    mono $CKAN update &>/dev/null
-    mono $CKAN available | grep '\*' | perl -pe 's/^.*? (.*?) \(.*$/$1/g'
+    local VERSION=$1
+    mono $CKANBIN ksp default $VERSION &>/dev/null
+    mono $CKANBIN update &>/dev/null
+    mono $CKANBIN available | grep '\*' | perl -pe 's/^.*? (.*?) \(.*$/$1/g'
 }
 
 # Get the modlist for latest and reference versions
 function build-modlists() {
-    REFERENCELIST="$WORKSPACE/list-$REFERENCEVERSION"
-    LATESTLIST="$WORKSPACE/list-$LATESTVERSION"
+    local REFERENCELIST="$WORKSPACE/list-$REFERENCEVERSION"
+    local LATESTLIST="$WORKSPACE/list-$LATESTVERSION"
 
     _build-modlist $REFERENCEVERSION > $REFERENCELIST
     _build-modlist $LATESTVERSION > $LATESTLIST

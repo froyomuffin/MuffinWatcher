@@ -1,0 +1,73 @@
+#!/bin/bash
+
+SCRIPTDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
+
+source $SCRIPTDIR/util
+source $SCRIPTDIR/../CONFIG
+
+# Takes a MODLIST and a REMAININGMODS and composes a brief message
+function compose-message() {
+    local MODLIST="$1"
+    shift
+    local REMAININGMODS="$*"
+
+    echo "Hello,"
+    echo
+    echo "The following mods from your watchlist are available for the current KSP release:"
+    echo "$(tab-list "$MODLIST")"
+    echo
+
+    if [[ -z "$REMAININGMODS" ]]
+    then
+        echo "There are no mods left in your watchlist!"
+        echo "You have been unsubscribed. For more updates, create a new watchlist."
+    else
+        echo "The following mods remain on your watchlist:"
+        echo "$(tab-list "$REMAININGMODS")"
+    fi
+
+    echo
+    echo "Bye!"
+}
+
+# Takes an EMAIL and a MESSAGE then sends it out
+function send-message() {
+    local EMAIL=$1
+    shift
+    local MESSAGE="$*"
+
+    echo "$MESSAGE" | mail -s "You have mods!" $EMAIL
+}
+
+function process() {
+    local SUBSCRIBERDIR=$1
+
+    echo "Processing email for $SUBSCRIBERDIR"
+
+    local REMAININGFILE="$SUBSCRIBERDIR/remaininglist"
+    local REMAININGLIST=$(cat $REMAININGFILE | sed 's/ //g' | sed '/^\s*$/d' | sort | uniq)
+
+    # AVAILABLEMODS is populated by the caller
+    local UPDATEDMODS=$(get-common "$REMAININGLIST" "$AVAILABLEMODS")
+
+    if [[ ! -z "$UPDATEDMODS" ]] 
+    then
+        echo "Updated mod(s) found!"
+        echo "$(tab-list "$UPDATEDMODS")"
+
+        UPDATEDLIST=$(filter-list "$REMAININGLIST" "$AVAILABLEMODS")
+
+        EMAIL=$(cat $SUBSCRIBERDIR/notifiers | grep '^email:' | head | awk -F':' '{ print $2 }')
+        send-message $EMAIL "$(compose-message "$UPDATEDMODS" "$UPDATEDLIST")"
+
+        # Update the list of remaining mods
+        if [[ ! -z "$UPDATEDLIST" ]]
+        then
+            echo "$UPDATEDLIST" > $REMAININGFILE
+        fi
+    fi
+}
+
+# Main
+SUBSCRIBERDIR=$1
+process $SUBSCRIBERDIR

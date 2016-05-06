@@ -1,0 +1,10 @@
+#!/bin/bash
+
+# Generate a 16 character random alphanumeric client ID
+# https://gist.github.com/earthgecko/3089509
+function get-random-id() {
+    cat /dev/urandom \
+        | tr -dc 'a-zA-Z-0-9' \
+        | fold -w 16 \
+        | head -n 1
+}
