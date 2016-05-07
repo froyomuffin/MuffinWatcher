@@ -4,23 +4,30 @@ SCRIPTDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" # http://stackoverflow
 
 source $SCRIPTDIR/../CONFIG
 
+# Configurations
+NOTIFICATIONPERIOD="900"
+
 # Load SUBSCRIBER to the workspace
 function load() {
     local SUBSCRIBER=$1
+    rm -rf $SUBSCRIBERWORKSPACE/$SUBSCRIBER
     cp -r $SUBSCRIBERSTORE/$SUBSCRIBER $SUBSCRIBERWORKSPACE/$SUBSCRIBER
 }
 
 # Persist SUBSCRIBER to store
 function persist() {
     local SUBSCRIBER=$1
-    cp -r $SUBSCRIBERWORKSPACE/$SUBSCRIBER $SUBSCRIBERSTORE/$SUBSCRIBER 
+    rm -rf $SUBSCRIBERSTORE/$SUBSCRIBER
+    cp -r $SUBSCRIBERWORKSPACE/$SUBSCRIBER $SUBSCRIBERSTORE/$SUBSCRIBER
 }
 
-# Configurations
-NOTIFICATIONPERIOD="900"
+mkdir -p $SUBSCRIBERSTORE &>/dev/null
+mkdir -p $SUBSCRIBERWORKSPACE &>/dev/null
 
 while true
 do
+    LATESTVERSION=$(cat $VERSIONFILE)
+
     SUBSCRIBERS=$(ls $SUBSCRIBERSTORE | awk -F'/' '{ print $NF }')
     AVAILABLEMODS=$(cat $LATESTLIST | sed 's/ //g' | sed '/^\s*$/d' | sort | uniq)
 
@@ -44,6 +51,7 @@ do
 
     for SUBSCRIBER in $SUBSCRIBERS
     do
+        echo "Notification service processing $SUBSCRIBER"
         # TODO: Checks
 
         load $SUBSCRIBER
@@ -55,13 +63,16 @@ do
             TYPE=$(echo $NOTIFIERDATA | awk -F':' '{ print $1 }')
             SUBSCRIBERDIR=$SUBSCRIBERWORKSPACE/$SUBSCRIBER
 
-            CMD="$SCRIPTDIR/$TYPE $SUBSCRIBERDIR"
+            CMD=". $SCRIPTDIR/$TYPE $SUBSCRIBERDIR"
 
             eval $CMD
         done
 
         persist $SUBSCRIBER
+
+        echo
     done
 
+    echo "Sleeping $NOTIFICATIONPERIOD"
     sleep $NOTIFICATIONPERIOD
 done

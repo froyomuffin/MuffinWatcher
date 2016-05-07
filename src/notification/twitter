@@ -11,43 +11,60 @@ function tweet-update() {
     MESSAGE="\"$UPDATEDMOD\" available for KSP $LATESTVERSION! #KSPModUpdated"
     echo "Sending '$MESSAGE'"
 
-    t update "$MESSAGE"
+    #t update "$MESSAGE"
 }
 
-# Takes UPDATEDLIST and dispatches them for a tweet each
+# Takes NEWREMAININGLIST and dispatches them for a tweet each
 function tweet-updates() {
-    UPDATEDLIST=$*
+    NEWREMAININGLIST=$*
 
-    for UPDATEDMOD in $UPDATEDLIST
+    for UPDATEDMOD in $NEWREMAININGLIST
     do
         tweet-update $UPDATEDMOD
     done
 }
 
-# Main
-[[ ! -e $TWITTER ]] && mkdir -p $WORKSPACEPER && touch $TWITTER
+function process() {
+    local TWITTERDIR=$1
 
-date
+    echo "Processing Twitter list"
 
-echo "Processing Twitter list"
+    local REMAININGFILE="$TWITTERDIR/remaininglist"
 
-SUBSCRIPTION=$(cat $TWITTER | sed 's/ //g' | sed '/^\s*$/d' | sort | uniq)
-AVAILABLEMODS=$(cat $LATESTLIST | sed 's/ //g' | sed '/^\s*$/d' | sort | uniq)
-UPDATEDMODS=$(get-common "$SUBSCRIPTION" "$AVAILABLEMODS")
-
-if [[ ! -z "$UPDATEDMODS" ]] 
-then
-    echo "Updated mod(s) found!"
-    echo "$(tab-list "$UPDATEDMODS")"
-
-    tweet-updates "$UPDATEDMODS"
-
-    UPDATEDSUB=$(filter-list "$SUBSCRIPTION" "$AVAILABLEMODS")
-    if [[ ! -z "$UPDATEDSUB" ]]
-    then
-        echo "$UPDATEDSUB" > $TWITTER
+    if [[ ! -e "$REMAININGFILE" ]]
+    then  
+        local WATCHLISTFILE="$TWITTERDIR/watchlist"
+        cp $WATCHLISTFILE $REMAININGFILE
     fi
-fi
 
-echo "Sleeping for a bit"
-sleep 900
+    local REMAININGLIST=$(cat $REMAININGFILE | sed 's/ //g' | sed '/^\s*$/d' | sort | uniq)
+
+    # AVAILABLEMODS is populated by the caller
+    local UPDATEDMODS=$(get-common "$REMAININGLIST" "$AVAILABLEMODS")
+
+    if [[ ! -z "$UPDATEDMODS" ]] 
+    then
+        echo "Updated mod(s) found!"
+        echo "$(tab-list "$UPDATEDMODS")"
+
+        tweet-updates "$UPDATEDMODS"
+
+        NEWREMAININGLIST=$(filter-list "$REMAININGLIST" "$AVAILABLEMODS")
+
+        # Update the list of remaining mods
+        if [[ ! -z "$NEWREMAININGLIST" ]]
+        then
+            echo "$NEWREMAININGLIST" > $REMAININGFILE
+        fi
+
+        UPDATEDSUB=$(filter-list "$SUBSCRIPTION" "$AVAILABLEMODS")
+        if [[ ! -z "$UPDATEDSUB" ]]
+        then
+            echo "$UPDATEDSUB" > $TWITTER
+        fi
+    fi
+}
+
+# Main
+TWITTERDIR=$1
+process $TWITTERDIR

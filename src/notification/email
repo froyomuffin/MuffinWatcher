@@ -2,7 +2,7 @@
 
 SCRIPTDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
 
-source $SCRIPTDIR/util
+source $SCRIPTDIR/utils
 source $SCRIPTDIR/../CONFIG
 
 # Takes a MODLIST and a REMAININGMODS and composes a brief message
@@ -36,7 +36,7 @@ function send-message() {
     shift
     local MESSAGE="$*"
 
-    echo "$MESSAGE" | mail -s "You have mods!" $EMAIL
+    #echo "$MESSAGE" | mail -s "You have mods!" $EMAIL
 }
 
 function process() {
@@ -45,6 +45,13 @@ function process() {
     echo "Processing email for $SUBSCRIBERDIR"
 
     local REMAININGFILE="$SUBSCRIBERDIR/remaininglist"
+
+    if [[ ! -e "$REMAININGFILE" ]]
+    then
+        local WATCHLISTFILE="$SUBSCRIBERDIR/watchlist"
+        cp $WATCHLISTFILE $REMAININGFILE
+    fi
+
     local REMAININGLIST=$(cat $REMAININGFILE | sed 's/ //g' | sed '/^\s*$/d' | sort | uniq)
 
     # AVAILABLEMODS is populated by the caller
@@ -55,15 +62,15 @@ function process() {
         echo "Updated mod(s) found!"
         echo "$(tab-list "$UPDATEDMODS")"
 
-        UPDATEDLIST=$(filter-list "$REMAININGLIST" "$AVAILABLEMODS")
+        NEWREMAININGLIST=$(filter-list "$REMAININGLIST" "$AVAILABLEMODS")
 
         EMAIL=$(cat $SUBSCRIBERDIR/notifiers | grep '^email:' | head | awk -F':' '{ print $2 }')
-        send-message $EMAIL "$(compose-message "$UPDATEDMODS" "$UPDATEDLIST")"
+        send-message $EMAIL "$(compose-message "$UPDATEDMODS" "$NEWREMAININGLIST")"
 
         # Update the list of remaining mods
-        if [[ ! -z "$UPDATEDLIST" ]]
+        if [[ ! -z "$NEWREMAININGLIST" ]]
         then
-            echo "$UPDATEDLIST" > $REMAININGFILE
+            echo "$NEWREMAININGLIST" > $REMAININGFILE
         fi
     fi
 }

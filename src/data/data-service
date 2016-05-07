@@ -5,6 +5,8 @@ SCRIPTDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" # http://stackoverflow
 source $SCRIPTDIR/../CONFIG
 
 # Configuration
+DATAUPDATEPERIOD="900"
+CKANBIN="$WORKSPACE/ckan"
 
 # Cleanup
 function reset-workspace() {
@@ -55,15 +57,13 @@ function create-stub() {
 
 # Create stubs for latest and reference version installations and link them into CKAN
 function create-stubs() {
-    create-stub $REFERENCEVERSION $WORKSPACE
     create-stub $LATESTVERSION $WORKSPACE
 
-    mono $CKANBIN ksp add $REFERENCEVERSION $WORKSPACE/$REFERENCEVERSION
     mono $CKANBIN ksp add $LATESTVERSION $WORKSPACE/$LATESTVERSION
 }
 
 # Get modlist of a version
-function _build-modlist() {
+function get-modlist() {
     local VERSION=$1
     mono $CKANBIN ksp default $VERSION &>/dev/null
     mono $CKANBIN update &>/dev/null
@@ -71,38 +71,20 @@ function _build-modlist() {
 }
 
 # Get the modlist for latest and reference versions
-function build-modlists() {
-    local REFERENCELIST="$WORKSPACE/list-$REFERENCEVERSION"
-    local LATESTLIST="$WORKSPACE/list-$LATESTVERSION"
-
-    _build-modlist $REFERENCEVERSION > $REFERENCELIST
-    _build-modlist $LATESTVERSION > $LATESTLIST
-
-    comm -12 $REFERENCELIST $LATESTLIST
+function build-modlist() {
+    get-modlist $LATESTVERSION > $LATESTLIST
 }
 
 # Main
-TARGETFILE="/tmp/test"
-
 while true
 do
+    LATESTVERSION=$(cat $VERSIONFILE)
+
     reset-workspace
     download-ckan
     create-stubs
+    build-modlist
 
-    DATA="$(build-modlists)"
-
-    echo "Got"
-    echo "$DATA"
-
-    date > $TARGETFILE
-    echo "<br><br>" >> $TARGETFILE
-
-    for LINE in $DATA
-    do
-        echo "$LINE <br>" >> $TARGETFILE
-    done
-
-    sleep 900 # 15 Minutes
+    echo "Sleeping $DATAUPDATEPERIOD"
+    sleep $DATAUPDATEPERIOD
 done
-\
