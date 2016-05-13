@@ -1,0 +1,30 @@
+#!/bin/bash
+
+SCRIPTDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" # http://stackoverflow.com/questions/59895/can-a-bash-script-tell-what-directory-its-stored-in
+
+if [[ $(whoami) != "root" ]]
+then
+    echo 'Must be root to execute this script!'
+    exit
+fi
+
+INSTALLTIONDIR="/home/muffinwatcher"
+SERVICELIST="notification data subscription"
+
+function uninstall() {
+    for SERVICE in $SERVICELIST
+    do
+        rm -rf "$INSTALLTIONDIR/$SERVICE"
+    done
+}
+
+function install() {
+    for SERVICE in $SERVICELIST
+    do
+        rm -rf "$INSTALLTIONDIR/$SERVICE" &>/dev/null
+        cp -r "$SCRIPTDIR/src/$SERVICE" "$INSTALLTIONDIR/$SERVICE"
+        chown -R muffinwatcher:muffinwatcher "$INSTALLTIONDIR/$SERVICE"
+    done
+}
+
+install

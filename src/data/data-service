@@ -70,8 +70,9 @@ function get-modlist() {
     mono $CKANBIN available | grep '\*' | perl -pe 's/^.*? (.*?) \(.*$/$1/g'
 }
 
-# Get the modlist for latest and reference versions
+# Get the modlist for latest version
 function build-modlist() {
+    echo "Building modlist for version: $LATESTVERSION"
     get-modlist $LATESTVERSION > $LATESTLIST
 }
 
