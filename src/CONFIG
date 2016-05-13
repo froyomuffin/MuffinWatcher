@@ -9,3 +9,18 @@ export VERSIONFILE="$DATASTORE/version"
 export WORKSPACE="/tmp/ksp-mod-watcher"
 export SUBSCRIBERWORKSPACE="$WORKSPACE/subscribers"
 export LATESTLIST="$WORKSPACE/list-latest"
+
+# Sensitive data
+CONFIGFILE="/home/"$(whoami)"/.ksp-mod-watcher"
+
+if [[ -e "$CONFIGFILE" ]]
+then
+    echo "Loading $CONFIGFILE"
+    . $CONFIGFILE
+    NONEXPORTEDLIST=$(cat $CONFIGFILE | grep -v '^export ')
+
+    for NONEXPORTED in "$NONEXPORTEDLIST"
+    do
+        export "$NONEXPORTED"
+    done
+fi
