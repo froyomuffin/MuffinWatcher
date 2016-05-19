@@ -42,17 +42,22 @@ do
 
         ACTIVEVERSION=$LOADEDVERSION
 
-        # Reset watchlist
+        # Sync subscriber data, notify subscriber of version update and reload data
         for SUBSCRIBER in $SUBSCRIBERS
         do
-            cp $SUBSCRIBERSTORE/$SUBSCRIBER/watchlist $SUBSCRIBERSTORE/$SUBSCRIBER/remaininglist
-            cp $SUBSCRIBERWORKSPACE/$SUBSCRIBER/watchlist $SUBSCRIBERSTORE/$SUBSCRIBER/remaininglist
+            echo "Notifcation service notifying \"$SUBSCRIBER\" of version change"
+
+            persist $SUBSCRIBER
+
+            $SUBSCRIBERSTORE/$SUBSCRIBER/version-change
+
+            load $SUBSCRIBER
         done
     fi
 
     for SUBSCRIBER in $SUBSCRIBERS
     do
-        echo "Notification service processing $SUBSCRIBER"
+        echo "Notification service processing \"$SUBSCRIBER\""
         # TODO: Checks
 
         load $SUBSCRIBER
