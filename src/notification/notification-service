@@ -26,27 +26,28 @@ mkdir -p $SUBSCRIBERWORKSPACE &>/dev/null
 
 while true
 do
-    LATESTVERSION=$(cat $VERSIONFILE)
+    LOADEDVERSION=$(cat $VERSIONFILE | head)
 
     SUBSCRIBERS=$(ls $SUBSCRIBERSTORE | awk -F'/' '{ print $NF }')
     AVAILABLEMODS=$(cat $LATESTLIST | sed 's/ //g' | sed '/^\s*$/d' | sort | uniq)
 
-    if [[ ! -z "$ACTIVEVERSION" ]]
+    if [[ -z "$ACTIVEVERSION" ]]
     then
-        LOADEDVERSION=$(cat $VERSIONFILE | head)
-        if [[ "$LOADEDVERSION" == "$LOADEDVERSION" ]]
-        then
-            echo "Detected new version $LOADEDVERSION"
+        ACTIVEVERSION=$LOADEDVERSION
+    fi
 
-            ACTIVEVERSION=$LOADEDVERSION
+    if [[ "$ACTIVEVERSION" != "$LOADEDVERSION" ]]
+    then
+        echo "Detected new version $LOADEDVERSION"
 
-            # Reset
-            for SUBSCRIBER in $SUBSCRIBERS
-            do
-                cp $SUBSCRIBERSTORE/$SUBSCRIBER/watchlist $SUBSCRIBERSTORE/$SUBSCRIBER/remaininglist
-                cp $SUBSCRIBERWORKSPACE/$SUBSCRIBER/watchlist $SUBSCRIBERSTORE/$SUBSCRIBER/remaininglist
-            done
-        fi
+        ACTIVEVERSION=$LOADEDVERSION
+
+        # Reset watchlist
+        for SUBSCRIBER in $SUBSCRIBERS
+        do
+            cp $SUBSCRIBERSTORE/$SUBSCRIBER/watchlist $SUBSCRIBERSTORE/$SUBSCRIBER/remaininglist
+            cp $SUBSCRIBERWORKSPACE/$SUBSCRIBER/watchlist $SUBSCRIBERSTORE/$SUBSCRIBER/remaininglist
+        done
     fi
 
     for SUBSCRIBER in $SUBSCRIBERS
