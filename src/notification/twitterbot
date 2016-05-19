@@ -29,39 +29,25 @@ function process() {
 
     echo "Processing Twitter list"
 
-    local REMAININGFILE="$TWITTERDIR/remaininglist"
+    local NOTIFIEDFILE="$TWITTERDIR/notifiedlist"
+    local NOTIFIEDLIST=""
 
-    if [[ ! -e "$REMAININGFILE" ]]
-    then  
-        local WATCHLISTFILE="$TWITTERDIR/watchlist"
-        cp $WATCHLISTFILE $REMAININGFILE
+    if [[ -e "$NOTIFIEDFILE" ]]
+    then 
+        NOTIFIEDLIST=$(cat $NOTIFIEDFILE | sed 's/ //g' | sed '/^\s*$/d' | sort | uniq)
     fi
 
-    local REMAININGLIST=$(cat $REMAININGFILE | sed 's/ //g' | sed '/^\s*$/d' | sort | uniq)
-
     # AVAILABLEMODS is populated by the caller
-    local UPDATEDMODS=$(get-common "$REMAININGLIST" "$AVAILABLEMODS")
+    local NEWMODS=$(filter-list "$AVAILABLEMODS" "$NOTIFIEDLIST")
 
-    if [[ ! -z "$UPDATEDMODS" ]] 
+    if [[ ! -z "$NEWMODS" ]] 
     then
         echo "Updated mod(s) found!"
-        echo "$(tab-list "$UPDATEDMODS")"
+        echo "$(tab-list "$NEWMODS")"
 
-        tweet-updates "$UPDATEDMODS"
+        tweet-updates "$NEWMODS"
 
-        NEWREMAININGLIST=$(filter-list "$REMAININGLIST" "$AVAILABLEMODS")
-
-        # Update the list of remaining mods
-        if [[ ! -z "$NEWREMAININGLIST" ]]
-        then
-            echo "$NEWREMAININGLIST" > $REMAININGFILE
-        fi
-
-        UPDATEDSUB=$(filter-list "$SUBSCRIPTION" "$AVAILABLEMODS")
-        if [[ ! -z "$UPDATEDSUB" ]]
-        then
-            echo "$UPDATEDSUB" > $TWITTER
-        fi
+        echo "$AVAILABLEMODS" > $NOTIFIEDFILE
     fi
 }
 
