@@ -12,7 +12,12 @@ CKANBIN="$WORKSPACE/ckan"
 function reset-workspace() {
     if [[ -e $CKANBIN ]]
     then
-        mono $CKANBIN ksp forget $LATESTVERSION
+        local CKANVERSIONS=$(mono $CKANBIN ksp list | grep -v Listing | sed '/^$/d' | awk -F'"' '{ print $2 }')
+
+        for CKANVERSION in $CKANVERSIONS
+        do
+            mono $CKANBIN ksp forget $CKANVERSION
+        done
     fi
 
     rm -rf $WORKSPACE
