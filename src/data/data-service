@@ -8,6 +8,52 @@ source $SCRIPTDIR/../CONFIG
 DATAUPDATEPERIOD="900"
 CKANBIN="$WORKSPACE/ckan"
 
+CKANMETA="$WORKSPACE/CKAN-META"
+CKANMETAREPO='https://github.com/KSP-CKAN/CKAN-meta.git'
+
+# Shorten a URL using bit.ly 
+function shorten() {
+    # BITLYTOKEN variable should be set before attempting to use this
+    if [[ -z "$BITLYTOKEN" ]]
+    then
+        return
+    fi
+
+    local URL=$1
+
+    SHORTURL=$(curl -Ls "https://api-ssl.bitly.com/v3/shorten" \
+        --data "access_token=$BITLYTOKEN" \
+        --data "format=txt" \
+        --data "domain=j.mp" \
+        --data-urlencode "longUrl=$URL")
+
+    # We know it's http :)
+    echo $SHORTURL | sed 's/http:\/\///g'
+}
+
+function get-homepage-list() {
+    cd $CKANMETA
+    grep -R 'homepage' . \
+        | perl -pe 's/^\.\/(.*?)\/.*\-(.*)\..*\:.*\"(.*?)\".*$/$1 $2 $3/g' \
+        | sort -k1,1 -k2,2Vr \
+        | awk '!a[$1]++' \
+        | perl -pe 's/^(.*?) (.*?) (.*?)$/$1|$3/g'
+    cd -
+}
+
+function get-mod-homepage() {
+    local MOD=$1
+
+    #TODO: Find a better way to pass in the HOMEPAGELIST
+    echo "$HOMEPAGELIST" | grep "^$MOD\|" | awk  -F'|' '{ print $NF }'
+}
+
+function get-short-url() {
+    local MOD=$1
+
+    shorten $(get-mod-homepage $MOD)
+}
+
 # Cleanup
 function reset-workspace() {
     if [[ -e $CKANBIN ]]
@@ -22,6 +68,10 @@ function reset-workspace() {
 
     rm -rf $WORKSPACE
     mkdir -p $WORKSPACE
+}
+
+function get-ckan-meta() {
+    git clone $CKANMETAREPO $CKANMETA
 }
 
 function get-ckan() {
@@ -78,7 +128,19 @@ function get-modlist() {
 # Get the modlist for latest version
 function build-modlist() {
     echo "Building modlist for version: $LATESTVERSION"
-    get-modlist $LATESTVERSION > $LATESTLIST
+    local MODLIST=$(get-modlist $LATESTVERSION)
+
+    #TODO: Avoid this global variable
+    HOMEPAGELIST="$(get-homepage-list)"
+
+    > $LATESTLIST
+
+    echo "Generating short urls"
+    for MOD in $MODLIST
+    do
+        local SHORTURL=$(get-short-url $MOD)
+        echo "$MOD|$SHORTURL" >> $LATESTLIST
+    done
 }
 
 # Main
@@ -88,6 +150,7 @@ do
 
     reset-workspace
     download-ckan
+    get-ckan-meta
     create-stubs
     build-modlist
 
