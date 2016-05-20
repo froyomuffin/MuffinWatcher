@@ -7,22 +7,7 @@ source $SCRIPTDIR/../CONFIG
 # Configurations
 NOTIFICATIONPERIOD="900"
 
-# Load SUBSCRIBER to the workspace
-function load() {
-    local SUBSCRIBER=$1
-    rm -rf $SUBSCRIBERWORKSPACE/$SUBSCRIBER
-    cp -r $SUBSCRIBERSTORE/$SUBSCRIBER $SUBSCRIBERWORKSPACE/$SUBSCRIBER
-}
-
-# Persist SUBSCRIBER to store
-function persist() {
-    local SUBSCRIBER=$1
-    rm -rf $SUBSCRIBERSTORE/$SUBSCRIBER
-    cp -r $SUBSCRIBERWORKSPACE/$SUBSCRIBER $SUBSCRIBERSTORE/$SUBSCRIBER
-}
-
 mkdir -p $SUBSCRIBERSTORE &>/dev/null
-mkdir -p $SUBSCRIBERWORKSPACE &>/dev/null
 
 while true
 do
@@ -38,7 +23,7 @@ do
 
     if [[ "$ACTIVEVERSION" != "$LOADEDVERSION" ]]
     then
-        echo "Detected new version $LOADEDVERSION"
+        echo "Detected new version $ACTIVEVERSION -> $LOADEDVERSION"
 
         ACTIVEVERSION=$LOADEDVERSION
 
@@ -47,11 +32,7 @@ do
         do
             echo "Notifcation service notifying \"$SUBSCRIBER\" of version change"
 
-            persist $SUBSCRIBER
-
             $SUBSCRIBERSTORE/$SUBSCRIBER/version-change
-
-            load $SUBSCRIBER
         done
     fi
 
@@ -60,21 +41,17 @@ do
         echo "Notification service processing \"$SUBSCRIBER\""
         # TODO: Checks
 
-        load $SUBSCRIBER
-
-        NOTIFIERS=$(cat $SUBSCRIBERWORKSPACE/$SUBSCRIBER/notifiers)
+        NOTIFIERS=$(cat $SUBSCRIBERSTORE/$SUBSCRIBER/notifiers)
 
         for NOTIFIERDATA in $NOTIFIERS
         do
             TYPE=$(echo $NOTIFIERDATA | awk -F':' '{ print $1 }')
-            SUBSCRIBERDIR=$SUBSCRIBERWORKSPACE/$SUBSCRIBER
+            SUBSCRIBERDIR=$SUBSCRIBERSTORE/$SUBSCRIBER
 
             CMD=". $SCRIPTDIR/$TYPE $SUBSCRIBERDIR"
 
             eval $CMD
         done
-
-        persist $SUBSCRIBER
 
         echo
     done

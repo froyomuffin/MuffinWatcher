@@ -75,10 +75,7 @@ function process() {
         fi
 
         # Update the list of remaining mods
-        if [[ ! -z "$NEWREMAININGLIST" ]]
-        then
-            echo "$NEWREMAININGLIST" > $REMAININGFILE
-        fi
+        echo "$NEWREMAININGLIST" > $REMAININGFILE
     fi
 }
 
