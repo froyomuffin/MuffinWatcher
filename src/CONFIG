@@ -21,6 +21,6 @@ then
 
     for NONEXPORTED in "$NONEXPORTEDLIST"
     do
-        export $NONEXPORTED
+        export "$NONEXPORTED"
     done
 fi
