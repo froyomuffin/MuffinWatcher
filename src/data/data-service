@@ -11,21 +11,29 @@ CKANBIN="$WORKSPACE/ckan"
 CKANMETA="$WORKSPACE/CKAN-META"
 CKANMETAREPO='https://github.com/KSP-CKAN/CKAN-meta.git'
 
+URLCACHEFILE="$DATASTORE/urlcache"
+
 # Shorten a URL using bit.ly 
 function shorten() {
-    # BITLYTOKEN variable should be set before attempting to use this
-    if [[ -z "$BITLYTOKEN" ]]
-    then
-        return
-    fi
-
     local URL=$1
 
-    SHORTURL=$(curl -Ls "https://api-ssl.bitly.com/v3/shorten" \
-        --data "access_token=$BITLYTOKEN" \
-        --data "format=txt" \
-        --data "domain=j.mp" \
-        --data-urlencode "longUrl=$URL")
+    # Check the short url cache
+    SHORTURL=$(echo "$URLCACHE" | grep $URL)
+
+    if [[ -z "$SHORTURL" ]]
+    then
+        # BITLYTOKEN variable should be set before attempting to use this
+        if [[ -z "$BITLYTOKEN" ]]
+        then
+            return
+        fi
+
+        SHORTURL=$(curl -Ls "https://api-ssl.bitly.com/v3/shorten" \
+            --data "access_token=$BITLYTOKEN" \
+            --data "format=txt" \
+            --data "domain=j.mp" \
+            --data-urlencode "longUrl=$URL")
+    fi
 
     # We know it's http :)
     echo $SHORTURL | sed 's/http:\/\///g'
@@ -41,6 +49,17 @@ function get-homepage-list() {
     cd -
 }
 
+function load-urlcache() {
+    if [[ -e "$URLCACHEFILE" ]]
+    then
+        URLCACHE="$(cat $URLCACHEFILE)"
+    fi
+}
+
+function save-urlcache() {
+    echo "$URLCACHE" > $URLCACHEFILE
+}
+
 function get-mod-homepage() {
     local MOD=$1
 
@@ -51,6 +70,7 @@ function get-mod-homepage() {
 function get-short-url() {
     local MOD=$1
 
+    # TODO: Handle rate errors
     shorten $(get-mod-homepage $MOD)
 }
 
@@ -135,12 +155,16 @@ function build-modlist() {
 
     > $LATESTLIST
 
+    load-urlcache
+
     echo "Generating short urls"
     for MOD in $MODLIST
     do
         local SHORTURL=$(get-short-url $MOD)
         echo "$MOD|$SHORTURL" >> $LATESTLIST
     done
+
+    save-urlcache
 }
 
 # Main
