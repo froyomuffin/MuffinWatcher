@@ -48,8 +48,9 @@ function process() {
 
         tweet-updates "$NEWMODS"
 
-        echo "$AVAILABLEMODS" > $NOTIFIEDFILE
     fi
+
+    echo "$AVAILABLEMODS" > $NOTIFIEDFILE
 }
 
 # Main

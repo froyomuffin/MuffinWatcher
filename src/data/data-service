@@ -5,7 +5,7 @@ SCRIPTDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" # http://stackoverflow
 source $SCRIPTDIR/../CONFIG
 
 # Configuration
-DATAUPDATEPERIOD="900"
+DATAUPDATEPERIOD="100"
 CKANBIN="$WORKSPACE/ckan"
 
 # Cleanup
@@ -78,6 +78,7 @@ function get-modlist() {
 # Get the modlist for latest version
 function build-modlist() {
     echo "Building modlist for version: $LATESTVERSION"
+    LATESTLIST="$WORKSPACE/list-$LATESTVERSION"
     get-modlist $LATESTVERSION > $LATESTLIST
 }
 

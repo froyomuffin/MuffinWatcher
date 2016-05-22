@@ -7,7 +7,6 @@ export VERSIONFILE="$DATASTORE/version"
 
 # Transient data
 export WORKSPACE="/tmp/ksp-mod-watcher"
-export LATESTLIST="$WORKSPACE/list-latest"
 
 # Sensitive data
 CONFIGFILE="/home/"$(whoami)"/.ksp-mod-watcher"

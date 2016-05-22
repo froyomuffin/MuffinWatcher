@@ -5,7 +5,7 @@ SCRIPTDIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)" # http://stackoverflow
 source $SCRIPTDIR/../CONFIG
 
 # Configurations
-NOTIFICATIONPERIOD="900"
+NOTIFICATIONPERIOD="100"
 
 mkdir -p $SUBSCRIBERSTORE &>/dev/null
 
@@ -14,7 +14,6 @@ do
     LOADEDVERSION=$(cat $VERSIONFILE | head)
 
     SUBSCRIBERS=$(ls $SUBSCRIBERSTORE | awk -F'/' '{ print $NF }')
-    AVAILABLEMODS=$(cat $LATESTLIST | sed 's/ //g' | sed '/^\s*$/d' | sort | uniq)
 
     if [[ -z "$ACTIVEVERSION" ]]
     then
@@ -36,25 +35,35 @@ do
         done
     fi
 
-    for SUBSCRIBER in $SUBSCRIBERS
-    do
-        echo "Notification service processing \"$SUBSCRIBER\""
-        # TODO: Checks
+    ACTIVELIST="$WORKSPACE/list-$ACTIVEVERSION"
 
-        NOTIFIERS=$(cat $SUBSCRIBERSTORE/$SUBSCRIBER/notifiers)
+    if [[ ! -e "$ACTIVELIST" ]]
+    then
+        # The list doesn't exist for the version we want. Wait for it to be generated.
+        echo "Mod list not available for $ACTIVEVERSION"
+    else
+        AVAILABLEMODS=$(cat $ACTIVELIST | sed 's/ //g' | sed '/^\s*$/d' | sort | uniq)
 
-        for NOTIFIERDATA in $NOTIFIERS
+        for SUBSCRIBER in $SUBSCRIBERS
         do
-            TYPE=$(echo $NOTIFIERDATA | awk -F':' '{ print $1 }')
-            SUBSCRIBERDIR=$SUBSCRIBERSTORE/$SUBSCRIBER
+            echo "Notification service processing \"$SUBSCRIBER\""
+            # TODO: Checks
 
-            CMD=". $SCRIPTDIR/$TYPE $SUBSCRIBERDIR"
+            NOTIFIERS=$(cat $SUBSCRIBERSTORE/$SUBSCRIBER/notifiers)
 
-            eval $CMD
+            for NOTIFIERDATA in $NOTIFIERS
+            do
+                TYPE=$(echo $NOTIFIERDATA | awk -F':' '{ print $1 }')
+                SUBSCRIBERDIR=$SUBSCRIBERSTORE/$SUBSCRIBER
+
+                CMD=". $SCRIPTDIR/$TYPE $SUBSCRIBERDIR"
+
+                eval $CMD
+            done
+
+            echo
         done
-
-        echo
-    done
+    fi
 
     echo "Sleeping $NOTIFICATIONPERIOD"
     sleep $NOTIFICATIONPERIOD
