@@ -35,6 +35,7 @@ function process() {
 
     if [[ -e "$NOTIFIEDFILE" ]]
     then 
+        echo "Loaded list of notified mods"
         NOTIFIEDLIST=$(cat $NOTIFIEDFILE | sed 's/ //g' | sed '/^\s*$/d' | sort | uniq)
     fi
 
@@ -48,9 +49,8 @@ function process() {
 
         tweet-updates "$NEWMODS"
 
+        echo "$AVAILABLEMODS" > $NOTIFIEDFILE
     fi
-
-    echo "$AVAILABLEMODS" > $NOTIFIEDFILE
 }
 
 # Main
